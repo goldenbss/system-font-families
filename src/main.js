@@ -183,6 +183,34 @@ const SystemFonts = function(options = {}) {
     // this list includes all TTF and OTF files (these are the ones we parse in this lib)
     this.getFontFilesSync = () => [...fontFiles];
 
+    this.getFontsTruelyExtended = function () {
+        return new Promise(function (resolve, reject) {
+
+            var promiseList = [];
+
+            var filteredFontFiles = !ignoreSystemFonts ? [].concat(_toConsumableArray(fontFiles)) : fontFiles.filter(function (f) {
+                return customFontFiles.has(f);
+            });
+
+            filteredFontFiles.forEach(function (file, i) {
+                promiseList.push(new Promise(function (resolve1) {
+                    _ttfinfo2.default.get(file, function (err, fontMeta) {
+                        if (!fontMeta) {
+                            resolve1(null);
+                        } else {
+                            resolve1(tableToObj(fontMeta.tables.name, file, !customFontFiles.has(file)));
+                        }
+                    });
+                }));
+            });
+            Promise.all(promiseList).then(function (res) {
+              resolve(res);
+            }, function (err) {
+                return reject(err);
+            });
+        });
+    };
+
     this.getFontsExtended = () => new Promise((resolve, reject) => {
 
         const promiseList = [];
